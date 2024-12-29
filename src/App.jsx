@@ -13,14 +13,26 @@ function App() {
       try {
         const apiKey = import.meta.env.VITE_NEWS_API_KEY
         if (!apiKey) {
-          throw new Error('API key is not defined. Please check your .env file.')
+          throw new Error('API key is not defined. Please check your environment variables.')
         }
-        const response = await fetch(`https://newsapi.org/v2/top-headlines?country=us&apiKey=${apiKey}`)
+
+        const url = new URL('https://newsapi.org/v2/top-headlines')
+        url.searchParams.append('country', 'us')
+        url.searchParams.append('apiKey', apiKey)
+
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'news-app/1.0',
+          },
+        })
+
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          const errorData = await response.json()
+          throw new Error(`API Error: ${errorData.message || response.statusText}`)
         }
+
         const data = await response.json()
-        setNews(data.articles)
+        setNews(data.articles || [])
         setLoading(false)
       } catch (error) {
         console.error('Error fetching news:', error)
@@ -42,7 +54,16 @@ function App() {
             <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         ) : error ? (
-          <div className="text-center text-red-500">{error}</div>
+          <div className="text-center text-red-500">
+            <p>Error loading news: {error}</p>
+            <p className="mt-2 text-sm">Please check your API key and try again later.</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Retry
+            </button>
+          </div>
         ) : (
           <NewsList news={news} />
         )}
