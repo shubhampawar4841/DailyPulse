@@ -3,3 +3,4 @@ export const config = {
     newsApiUrl: 'https://newsapi.org/v2',
   }
   
+  
